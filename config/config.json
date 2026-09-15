@@ -1,0 +1,115 @@
+{
+  "system": {
+    "device_name": "RPi5-AI-Guard-01",
+    "log_level": "INFO",
+    "log_file": "logs/safety_monitor.log",
+    "snapshot_dir": "logs/snapshots",
+    "save_alert_snapshots": true,
+    "mock_hardware": false
+  },
+  "camera": {
+    "source": 0,
+    "backend": "auto",
+    "width": 640,
+    "height": 480,
+    "fps": 15,
+    "rotation": 0
+  },
+  "inference": {
+    "model_type": "yolov8n-pose.pt",
+    "confidence_threshold": 0.40,
+    "iou_threshold": 0.45,
+    "device": "cpu",
+    "num_threads": 4,
+    "frame_skip": 2,
+    "target_inference_fps": 8
+  },
+  "tracker": {
+    "type": "bytetrack",
+    "max_disappeared": 30,
+    "track_history_length": 50,
+    "min_hits": 3
+  },
+  "hardware": {
+    "gpio": {
+      "enabled": true,
+      "led_pin": 18,
+      "buzzer_pin": 17,
+      "panic_button_pin": 27,
+      "active_high": true,
+      "alert_duration_sec": 2.5,
+      "cooldown_sec": 1.0
+    },
+    "oled": {
+      "enabled": true,
+      "i2c_port": 1,
+      "i2c_address": "0x3C",
+      "width": 128,
+      "height": 64,
+      "refresh_rate_hz": 2,
+      "screen_type": "ssd1306"
+    }
+  },
+  "detectors": {
+    "snatching": {
+      "enabled": true,
+      "min_approach_speed": 160.0,
+      "min_escape_speed": 220.0,
+      "max_interaction_dist": 70.0,
+      "max_interaction_time": 1.5,
+      "divergence_angle_min": 60.0
+    },
+    "eve_teasing": {
+      "enabled": true,
+      "proximity_threshold": 65.0,
+      "duration_threshold": 3.5,
+      "loitering_in_personal_space": true,
+      "facing_angle_tolerance": 45.0
+    },
+    "suspicious_following": {
+      "enabled": true,
+      "min_tracking_duration": 4.0,
+      "trajectory_similarity": 0.78,
+      "min_distance": 40.0,
+      "max_distance": 180.0,
+      "min_distance_traveled": 80.0
+    },
+    "loitering": {
+      "enabled": false,
+      "dwell_time_threshold": 10.0,
+      "movement_radius_max": 50.0,
+      "zones": []
+    },
+    "panic_movement": {
+      "enabled": true,
+      "speed_threshold": 200.0,
+      "acceleration_threshold": 120.0,
+      "min_erratic_angle_change": 70.0,
+      "crowd_scatter_threshold": 3
+    },
+    "altercation": {
+      "enabled": true,
+      "overlap_iou_threshold": 0.15,
+      "keypoint_velocity_thresh": 180.0,
+      "contact_duration": 1.0,
+      "kinetic_energy_spike": 150.0
+    },
+    "falling": {
+      "enabled": true,
+      "aspect_ratio_threshold": 1.15,
+      "downward_velocity_thresh": 130.0,
+      "ground_plane_y_min": 240,
+      "torso_angle_threshold": 30.0
+    },
+    "crowd_formation": {
+      "enabled": true,
+      "cluster_distance_threshold": 85.0,
+      "min_cluster_size": 4,
+      "formation_time_window": 5.0
+    },
+    "unauthorized_entry": {
+      "enabled": false,
+      "zones": []
+    }
+  }
+}

@@ -1,0 +1,128 @@
+# ==============================================================================
+# AI Safety Monitoring System Configuration
+# Target Device: Raspberry Pi 5 (Debian 13 Trixie / aarch64)
+# ==============================================================================
+
+system:
+  device_name: "RPi5-AI-Guard-01"
+  log_level: "INFO"
+  log_file: "logs/safety_monitor.log"
+  snapshot_dir: "logs/snapshots"
+  save_alert_snapshots: true
+  mock_hardware: false   # Set to true for off-Pi testing without GPIO/OLED
+
+camera:
+  source: 0              # Camera index, video file path, or 'rpicam' for Picamera2
+  backend: "auto"        # 'auto', 'opencv', 'picamera2', or 'gstreamer'
+  width: 640             # Processing resolution (optimized for CPU)
+  height: 480
+  fps: 15
+  rotation: 0            # 0, 90, 180, 270
+
+inference:
+  model_type: "yolov8n-pose.pt"  # Nano pose model provides both person detection + 17 keypoints
+  confidence_threshold: 0.40
+  iou_threshold: 0.45
+  device: "cpu"                  # 'cpu' for Raspberry Pi 5
+  num_threads: 4                 # Utilize all 4 Cortex-A76 cores
+  frame_skip: 2                  # Run heavy inference every N frames, use tracker in-between
+  target_inference_fps: 8        # CPU throttle target
+
+tracker:
+  type: "bytetrack"              # 'bytetrack' or 'centroid'
+  max_disappeared: 30            # Frames before track deletion (~2-3 seconds at 10-15 FPS)
+  track_history_length: 50       # Number of centroid positions retained per person
+  min_hits: 3                    # Minimum frames before track is confirmed active
+
+hardware:
+  gpio:
+    enabled: true
+    led_pin: 18                  # GPIO 18 (Pin 12) - Visual strobe
+    buzzer_pin: 17               # GPIO 17 (Pin 11) - Piezo buzzer
+    panic_button_pin: 27         # GPIO 27 (Pin 13) - Physical panic button
+    active_high: true
+    alert_duration_sec: 2.5      # Minimum time alert remains active per trigger
+    cooldown_sec: 1.0            # Delay between repetitive alerts
+  
+  oled:
+    enabled: true
+    i2c_port: 1
+    i2c_address: "0x3C"          # Typical SSD1306 / SH1106 address
+    width: 128
+    height: 64
+    refresh_rate_hz: 2
+    screen_type: "ssd1306"       # 'ssd1306' or 'sh1106'
+
+# ==============================================================================
+# Detection Conditions & Thresholds
+# ==============================================================================
+detectors:
+
+  # 1. Snatching – Rapid approach, brief proximity, rapid divergent acceleration
+  snatching:
+    enabled: true
+    min_approach_speed: 160.0    # Pixels / second
+    min_escape_speed: 220.0      # Pixels / second
+    max_interaction_dist: 70.0   # Pixels between snatcher and victim
+    max_interaction_time: 1.5    # Seconds within proximity before rapid escape
+    divergence_angle_min: 60.0   # Degrees shift between victim & snatcher vectors
+
+  # 2. Eve-teasing – Suspicious prolonged close proximity / personal space invasion
+  eve_teasing:
+    enabled: true
+    proximity_threshold: 65.0    # Pixels (~0.7m personal space breach)
+    duration_threshold: 3.5      # Seconds in sustained close proximity
+    loitering_in_personal_space: true
+    facing_angle_tolerance: 45.0 # Degrees facing each other
+
+  # 3. Suspicious following – One person tracking another across time & path
+  suspicious_following:
+    enabled: true
+    min_tracking_duration: 4.0   # Seconds of continuous trailing
+    trajectory_similarity: 0.78  # Cosine similarity between movement trajectories
+    min_distance: 40.0           # Min distance (pixels) to avoid merged pairs
+    max_distance: 180.0          # Max distance (pixels) to be considered following
+    min_distance_traveled: 80.0  # Min trajectory length to eliminate stationary noise
+
+  # 4. Loitering – Person remaining in a defined zone beyond a time threshold
+  loitering:
+    enabled: false               # Disabled until custom zones are configured
+    dwell_time_threshold: 10.0   # Seconds a person can stay before alert triggers
+    movement_radius_max: 50.0    # Pixels - maximum wander radius for loitering
+    zones: []                    # Add custom polygon zones here when needed
+
+  # 5. Panic movement – Sudden running, erratic motion, or rapid crowd dispersal
+  panic_movement:
+    enabled: true
+    speed_threshold: 200.0       # Pixels / second
+    acceleration_threshold: 120.0# Pixels / second^2
+    min_erratic_angle_change: 70.0 # Angular change between consecutive vectors
+    crowd_scatter_threshold: 3   # Minimum people running in divergent directions simultaneously
+
+  # 6. Physical altercations – Fighting, violent interaction, rapid limb motion
+  altercation:
+    enabled: true
+    overlap_iou_threshold: 0.15  # Bounding box collision threshold
+    keypoint_velocity_thresh: 180.0 # Wrist/shoulder keypoint speed (px/sec)
+    contact_duration: 1.0        # Seconds of high-energy overlapping contact
+    kinetic_energy_spike: 150.0
+
+  # 7. Falling – Sudden aspect ratio shift, rapid downward velocity, ground orientation
+  falling:
+    enabled: true
+    aspect_ratio_threshold: 1.15 # Bounding box Width / Height > 1.15
+    downward_velocity_thresh: 130.0 # Vertical pixel drop per second
+    ground_plane_y_min: 240      # Lower half of the frame (pixels)
+    torso_angle_threshold: 30.0  # Degrees with horizontal ground axis (0 = flat)
+
+  # 8. Unusual crowd formation – Sudden dense clustering or abnormal group count
+  crowd_formation:
+    enabled: true
+    cluster_distance_threshold: 85.0 # Max distance (pixels) between persons in a cluster
+    min_cluster_size: 4          # Number of persons constituting abnormal cluster
+    formation_time_window: 5.0   # Seconds within which crowd gathered
+
+  # 9. Unauthorized entry – Entering a restricted polygon zone
+  unauthorized_entry:
+    enabled: false               # Disabled until custom restricted zones are configured
+    zones: []                    # Add restricted polygons [[x1, y1], [x2, y2], ...] here when needed

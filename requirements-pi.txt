@@ -1,0 +1,8 @@
+# Include base requirements
+-r requirements.txt
+
+# Raspberry Pi GPIO & I2C Hardware Packages
+gpiozero>=2.0
+lgpio>=0.2.2.0
+luma.oled>=3.13.0
+smbus2>=0.4.3
