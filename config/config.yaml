@@ -37,8 +37,10 @@ tracker:
 hardware:
   gpio:
     enabled: true
-    led_pin: 18                  # GPIO 18 (Pin 12) - Visual strobe
-    buzzer_pin: 17               # GPIO 17 (Pin 11) - Piezo buzzer
+    led_low_pin: 24              # GPIO 24 (Pin 18) - Green LED (Low / Normal status)
+    led_med_pin: 23              # GPIO 23 (Pin 16) - Yellow / Amber LED (Medium Warning)
+    led_high_pin: 18             # GPIO 18 (Pin 12) - Red LED (High / Critical Alarm)
+    buzzer_pin: 17               # GPIO 17 (Pin 11) - Piezo buzzer (Active ONLY on HIGH/CRITICAL)
     panic_button_pin: 27         # GPIO 27 (Pin 13) - Physical panic button
     active_high: true
     alert_duration_sec: 2.5      # Minimum time alert remains active per trigger

@@ -69,7 +69,7 @@ class LoiteringDetector(BaseDetector):
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="LOITERING",
-                                    severity="MEDIUM",
+                                    severity="LOW",
                                     confidence=0.85,
                                     description=(
                                         f"Person {track_id} loitering in '{zone_name}' "

@@ -76,7 +76,7 @@ class SnatchingDetector(BaseDetector):
                                     alerts.append(
                                         ThreatAlert(
                                             threat_type="SNATCHING_ATTEMPT",
-                                            severity="CRITICAL",
+                                            severity="MEDIUM",
                                             confidence=0.85,
                                             description=(
                                                 f"Grab-and-run snatching pattern: Person {attacker_id} approached "

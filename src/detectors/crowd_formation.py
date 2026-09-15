@@ -76,7 +76,7 @@ class CrowdFormationDetector(BaseDetector):
                     alerts.append(
                         ThreatAlert(
                             threat_type="UNUSUAL_CROWD_FORMATION",
-                            severity="HIGH",
+                            severity="LOW",
                             confidence=0.88,
                             description=(
                                 f"Unusual crowd density detected: {len(cluster_members)} persons "

@@ -74,7 +74,7 @@ class AltercationDetector(BaseDetector):
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="PHYSICAL_ALTERCATION",
-                                    severity="CRITICAL",
+                                    severity="HIGH",
                                     confidence=0.88,
                                     description=(
                                         f"Physical altercation/fight between Person {tid1} and Person {tid2} "

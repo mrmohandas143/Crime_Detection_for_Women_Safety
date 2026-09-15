@@ -93,7 +93,7 @@ class SuspiciousFollowingDetector(BaseDetector):
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="SUSPICIOUS_FOLLOWING",
-                                    severity="HIGH",
+                                    severity="LOW",
                                     confidence=0.84,
                                     description=(
                                         f"Suspicious following: Person {id_foll} is trailing Person {id_lead} "

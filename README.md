@@ -102,17 +102,18 @@ Crime_Detection/
 
 ## 3. The 9 Detection Conditions & Reliability Analysis
 
-| # | Threat Condition | Detection Methodology | Reliability Tier | False-Positive Vulnerabilities & Mitigation |
+| # | Threat Condition | Detection Methodology | Severity Risk Level | False-Positive Vulnerabilities & Mitigation |
 |---|---|---|---|---|
-| **1** | **Snatching** | **Heuristic**: Rapid approach $\rightarrow$ brief close proximity ($<1.5\text{s}$) $\rightarrow$ high-speed escape vector ($>220\text{px/s}$). | 🟡 **Heuristic** | *Risk*: Joggers passing closely by pedestrians.<br>*Mitigation*: Requires divergence angle shift and velocity acceleration ratio ($>1.4\times$). |
-| **2** | **Eve-Teasing / Harassment** | **Heuristic**: Persistent intimate space intrusion ($<65\text{px}$ / $<0.8\text{m}$) sustained for $>3.5\text{s}$ without walking through. | 🟡 **Heuristic** | *Risk*: Friends/couples standing together in conversation.<br>*Mitigation*: Use as a soft alert or combine with camera zone filtering. |
-| **3** | **Suspicious Following** | **Geometric Trajectory**: Cosine similarity ($>0.78$) of movement vectors over $>4.0\text{s}$ while follower maintains lagging distance ($40\text{--}180\text{px}$). | 🟢 **High** | *Risk*: Coincidental walking down a narrow hallway.<br>*Mitigation*: Requires minimum displacement ($>80\text{px}$) and directional dot-product confirmation. |
-| **4** | **Loitering** | **Spatial Dwell**: Point-in-polygon containment timer triggering if dwell $> \text{threshold}$ (e.g. $10\text{s}$). | 🟢 **Very High** | *Risk*: Authorized staff standing in area.<br>*Mitigation*: Configure customized polygon zones in `config.yaml`. |
-| **5** | **Panic Movement** | **Kinematic Surge**: Speed spike ($>200\text{px/s}$), erratic turns ($>70^\circ$), or simultaneous multi-person outward dispersal. | 🟢 **High** | *Risk*: Individual running to catch a bus.<br>*Mitigation*: Crowd scatter condition requires $\ge 3$ persons sprinting in divergent vectors. |
-| **6** | **Physical Altercation** | **Collision + Pose**: Bounding box IoU overlap ($>0.15$) combined with high kinetic speed ($>150\text{px/s}$) and wrist/arm keypoint motion. | 🟢 **High** | *Risk*: Playful hugs or high-fives.<br>*Mitigation*: Requires sustained high-energy contact duration ($>1.0\text{s}$). |
-| **7** | **Falling** | **Aspect Ratio + Pose**: BBox width/height flip ($W/H > 1.15$), downward vertical velocity ($v_y > 130\text{px/s}$), and horizontal torso pose angle ($<30^\circ$). | 🟢 **Very High** | *Risk*: Person bending down to tie shoe.<br>*Mitigation*: Downward velocity filter and ground-plane altitude boundary. |
-| **8** | **Unusual Crowd Formation** | **Spatial Clustering**: Connected components graph clustering finding $\ge N$ people within spatial radius. | 🟢 **Very High** | *Risk*: Normal queues or public transit arrival.<br>*Mitigation*: Adjustable minimum cluster size and distance threshold. |
-| **9** | **Unauthorized Entry** | **Polygon Containment**: Immediate ray-casting test for person centroid/feet inside high-security perimeter. | 🟢 **Deterministic (100%)** | *Risk*: Sensor occlusions or inaccurate polygon boundary.<br>*Mitigation*: Precise coordinate calibration in `config.yaml`. |
+| **1** | **Purse / Chain Snatching** | **Heuristic**: Rapid approach $\rightarrow$ brief proximity ($<1.5\text{s}$) $\rightarrow$ escape vector ($>220\text{px/s}$). | 🟡 **MEDIUM** | Requires angular divergence shift and acceleration ratio ($>1.4\times$). |
+| **2** | **Physical Assault & Fighting** | **Collision + Pose**: BBox IoU overlap ($>0.15$) + high kinetic speed ($>160\text{px/s}$). | 🔴 **HIGH** | Requires sustained high-energy contact ($>1.0\text{s}$). |
+| **3** | **Eve-Teasing & Harassment** | **Heuristic**: Persistent intimate space intrusion ($<65\text{px}$) sustained $>3.5\text{s}$. | 🔴 **HIGH** | Tracks hover duration and personal space perimeter breach. |
+| **4** | **Stalking & Following** | **Geometric Trajectory**: Cosine similarity ($>0.78$) over $>4.0\text{s}$ at lagging distance. | 🟢 **LOW** | Requires minimum travel displacement ($>80\text{px}$) and directional dot product. |
+| **5** | **Criminal Loitering & Casing** | **Spatial Dwell**: Point-in-polygon timer triggering if dwell $>10\text{s}$. | 🟢 **LOW** | Custom polygon zone filtering. |
+| **6** | **Trespassing & Intrusion** | **Polygon Boundary**: Instantaneous ray-casting test for restricted coordinates. | 🟡 **MEDIUM** | Precise coordinate calibration in config. |
+| **7** | **Collapse & Slip-and-Fall** | **Aspect Ratio + Pose**: BBox flip ($W/H > 1.15$) + downward drop velocity ($v_y > 130\text{px/s}$). | 🟡 **MEDIUM** | Downward velocity filter and ground-plane altitude boundary. |
+| **8** | **Panic Movement & Stampede** | **Kinematic Surge**: Speed spike ($>200\text{px/s}$) or multi-person outward scatter. | 🟢 **LOW** | Minimum 3 persons sprinting simultaneously for scatter. |
+| **9** | **Mob Gathering & Assembly** | **Spatial Clustering**: Connected components graph identifying $\ge 4$ persons within radius. | 🟢 **LOW** | Distance threshold and cluster size threshold. |
+| **10**| **Manual Panic Alarm** | **Hardware / Keyboard Override**: Physical GPIO 27 button or `'P'` key. | 🔴 **HIGH** | Immediate emergency trigger. |
 
 ---
 

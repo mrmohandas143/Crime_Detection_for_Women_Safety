@@ -71,7 +71,7 @@ class PanicMovementDetector(BaseDetector):
                 alerts.append(
                     ThreatAlert(
                         threat_type="PANIC_MOVEMENT",
-                        severity="HIGH",
+                        severity="LOW",
                         confidence=0.82,
                         description=(
                             f"Panic movement / sudden sprint by Person {track_id} "
@@ -93,7 +93,7 @@ class PanicMovementDetector(BaseDetector):
             alerts.append(
                 ThreatAlert(
                     threat_type="CROWD_SCATTER_PANIC",
-                    severity="CRITICAL",
+                    severity="LOW",
                     confidence=0.90,
                     description=f"Mass panic dispersal detected: {len(running_tracks)} persons sprinting simultaneously",
                     track_ids=running_tracks,

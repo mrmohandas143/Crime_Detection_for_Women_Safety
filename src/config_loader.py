@@ -61,9 +61,12 @@ class TrackerConfig:
 @dataclass
 class GPIOConfig:
     enabled: bool = True
-    led_pin: int = 18
-    buzzer_pin: int = 17
-    panic_button_pin: int = 27
+    led_low_pin: int = 24        # Green LED - LOW / Normal
+    led_med_pin: int = 23        # Yellow / Amber LED - MEDIUM Warning
+    led_high_pin: int = 18       # Red LED - HIGH / Critical Alarm
+    led_pin: int = 18            # Legacy alias for led_high_pin
+    buzzer_pin: int = 17         # Piezo Buzzer (Active ONLY on HIGH/CRITICAL)
+    panic_button_pin: int = 27   # Push Button (Emergency)
     active_high: bool = True
     alert_duration_sec: float = 2.5
     cooldown_sec: float = 1.0

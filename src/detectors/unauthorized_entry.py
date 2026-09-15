@@ -56,7 +56,7 @@ class UnauthorizedEntryDetector(BaseDetector):
                         alerts.append(
                             ThreatAlert(
                                 threat_type="UNAUTHORIZED_ENTRY",
-                                severity="CRITICAL",
+                                severity="MEDIUM",
                                 confidence=0.92,
                                 description=f"Unauthorized entry detected: Person {track_id} entered '{zone_name}'",
                                 track_ids=[track_id],

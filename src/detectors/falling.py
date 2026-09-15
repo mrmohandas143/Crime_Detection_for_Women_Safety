@@ -86,7 +86,7 @@ class FallingDetector(BaseDetector):
                 alerts.append(
                     ThreatAlert(
                         threat_type="FALLING",
-                        severity="CRITICAL",
+                        severity="MEDIUM",
                         confidence=0.88,
                         description=f"Person {track_id} collapsed / fell to ground (aspect_ratio={aspect_ratio:.2f}, vy={downward_vel:.1f}px/s)",
                         track_ids=[track_id],

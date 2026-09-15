@@ -33,7 +33,9 @@
   "hardware": {
     "gpio": {
       "enabled": true,
-      "led_pin": 18,
+      "led_low_pin": 24,
+      "led_med_pin": 23,
+      "led_high_pin": 18,
       "buzzer_pin": 17,
       "panic_button_pin": 27,
       "active_high": true,
