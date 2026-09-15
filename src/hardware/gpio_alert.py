@@ -76,8 +76,8 @@ class GPIOAlertController:
             if self.panic_callback:
                 self.button.when_pressed = self._on_panic_button_pressed
 
-            # Initial State: Green LED ON (Safe/Monitoring)
-            self.led_low.on()
+            # Initial State: ALL LEDs and Buzzer OFF by default
+            self.all_off()
 
             print(
                 f"[GPIO] Initialized 3 LEDs [LOW: GPIO {self.config.led_low_pin} (Green), "
@@ -91,7 +91,7 @@ class GPIOAlertController:
 
     def _on_panic_button_pressed(self) -> None:
         print("\n[GPIO-ALERT] !!! PHYSICAL PANIC BUTTON PRESSED !!!\n")
-        self.trigger_alert("PANIC_BUTTON_PRESSED", severity="CRITICAL", duration_sec=5.0)
+        self.trigger_alert("PANIC_BUTTON_PRESSED", severity="HIGH", duration_sec=5.0)
         if self.panic_callback:
             self.panic_callback()
 
@@ -137,25 +137,18 @@ class GPIOAlertController:
         end_time = time.time() + event.duration_sec
         sev = event.severity
 
-        # Always clear idle Green/Yellow LEDs when handling HIGH or MEDIUM alerts
-        if self.led_low:
-            self.led_low.off()
-        if self.led_med:
-            self.led_med.off()
-        if self.led_high:
-            self.led_high.off()
-        if self.buzzer:
-            self.buzzer.off()
+        # Ensure all actuators are initially off
+        self.all_off()
 
         if self.mock_mode:
             if sev in ("HIGH", "CRITICAL"):
-                print(f"\n[MOCK-GPIO] 🔴 HIGH RISK ALARM: {event.threat_type} -> RED LED (GPIO {self.config.led_high_pin}) ON | 🔊 BUZZER (GPIO {self.config.buzzer_pin}) ACTIVE")
+                print(f"\n[MOCK-GPIO] 🔴 HIGH RISK DETECTED: {event.threat_type} -> RED LED (GPIO {self.config.led_high_pin}) ON | 🔊 BUZZER (GPIO {self.config.buzzer_pin}) ON")
             elif sev == "MEDIUM":
-                print(f"\n[MOCK-GPIO] 🟡 MEDIUM RISK WARNING: {event.threat_type} -> YELLOW LED (GPIO {self.config.led_med_pin}) PULSING | 🔇 BUZZER SILENT")
+                print(f"\n[MOCK-GPIO] 🟡 MEDIUM RISK DETECTED: {event.threat_type} -> YELLOW LED (GPIO {self.config.led_med_pin}) ON | 🔇 BUZZER OFF")
             else:
-                print(f"\n[MOCK-GPIO] 🟢 LOW RISK EVENT: {event.threat_type} -> GREEN LED (GPIO {self.config.led_low_pin}) ON | 🔇 BUZZER SILENT")
+                print(f"\n[MOCK-GPIO] 🟢 LOW RISK DETECTED: {event.threat_type} -> GREEN LED (GPIO {self.config.led_low_pin}) ON | 🔇 BUZZER OFF")
 
-        # 1. HIGH / CRITICAL RISK: Red LED strobing + Buzzer sounding
+        # 1. HIGH / CRITICAL RISK: RED LED strobing + BUZZER sounding (Green & Yellow OFF)
         if sev in ("HIGH", "CRITICAL"):
             pulse_rate = 0.08 if sev == "CRITICAL" else 0.15
             while time.time() < end_time and not self._stop_event.is_set():
@@ -171,7 +164,7 @@ class GPIOAlertController:
                     self.buzzer.off()
                 time.sleep(pulse_rate)
 
-        # 2. MEDIUM RISK: Yellow LED pulsing (Buzzer completely SILENT)
+        # 2. MEDIUM RISK: YELLOW LED pulsing ONLY (Green, Red, Buzzer OFF)
         elif sev == "MEDIUM":
             while time.time() < end_time and not self._stop_event.is_set():
                 if self.led_med:
@@ -182,28 +175,24 @@ class GPIOAlertController:
                     self.led_med.off()
                 time.sleep(0.25)
 
-        # 3. LOW RISK: Green LED solid ON (Buzzer SILENT)
+        # 3. LOW RISK: GREEN LED solid ON ONLY (Yellow, Red, Buzzer OFF)
         else:
             if self.led_low:
                 self.led_low.on()
             time.sleep(event.duration_sec)
+            if self.led_low:
+                self.led_low.off()
 
-        # Reset to Normal Idle State: Green ON, Yellow/Red OFF, Buzzer OFF
-        self.reset_to_idle()
+        # Turn EVERYTHING completely OFF after alert duration expires
+        self.all_off()
         self._is_alerting = False
 
     def reset_to_idle(self) -> None:
-        """Restores normal secure idle status (Green LED ON, all others OFF)."""
-        if self.led_high:
-            self.led_high.off()
-        if self.led_med:
-            self.led_med.off()
-        if self.buzzer:
-            self.buzzer.off()
-        if self.led_low:
-            self.led_low.on()
+        """Turns OFF all LEDs and Buzzer when idle / no threat is active."""
+        self.all_off()
 
     def all_off(self) -> None:
+        """Explicitly forces all 3 LEDs and Buzzer to the OFF (inactive) state."""
         if self.led_low:
             self.led_low.off()
         if self.led_med:

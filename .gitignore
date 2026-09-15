@@ -1,0 +1,57 @@
+# ==============================================================================
+# Git Ignore Configuration for AI Safety Monitoring System
+# ==============================================================================
+
+# --- Captured Evidence & Incident Logs ---
+logs/
+*.log
+logs/snapshots/
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+
+# --- AI Model Weights (Large Binary Files) ---
+*.pt
+*.onnx
+*.tflite
+*.engine
+*.bin
+*.param
+yolov8*.pt
+
+# --- Python & Virtual Environments ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# --- Packaging & Distribution ---
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Pytest & Unit Test Cache ---
+.pytest_cache/
+.coverage
+htmlcov/

@@ -55,24 +55,29 @@ This document details the physical pin connections for the **3 Risk-Level LEDs (
 ## 3. Risk Level Behavior Logic
 
 ```
-   [NORMAL / SECURE]       -->  🟢 GREEN LED ON (GPIO 24)       | Buzzer SILENT
-   [MEDIUM RISK / WARNING] -->  🟡 YELLOW LED PULSING (GPIO 23) | Buzzer SILENT
-   [HIGH RISK / ALARM]     -->  🔴 RED LED STROBING (GPIO 18)   | 🔊 BUZZER ACTIVE (GPIO 17)
+   [IDLE / NO THREAT]      -->  ALL LEDs OFF (Green/Yellow/Red) | Buzzer OFF
+   [LOW RISK DETECTED]     -->  🟢 GREEN LED ON (GPIO 24)       | Buzzer OFF
+   [MEDIUM RISK DETECTED]  -->  🟡 YELLOW LED ON (GPIO 23)      | Buzzer OFF
+   [HIGH RISK DETECTED]    -->  🔴 RED LED STROBING (GPIO 18)   | 🔊 BUZZER ACTIVE (GPIO 17)
 ```
 
-- **LOW Severity** (Normal secure monitoring):
-  - **Green LED** is solid **ON**.
+- **IDLE (No condition active)**:
+  - **ALL 3 LEDs are OFF** (Green, Yellow, Red OFF).
+  - **Buzzer is OFF**.
+
+- **LOW Severity** (Panic Movement, Suspicious Following, Loitering, Crowd Gathering):
+  - **Green LED** turns **ON** only for the alert duration, then turns OFF.
   - Yellow & Red LEDs are OFF.
-  - Buzzer is **SILENT**.
+  - Buzzer is **OFF**.
 
-- **MEDIUM Severity** (Loitering, Suspicious Following warnings):
-  - **Yellow LED** pulses at **0.30s cadence**.
+- **MEDIUM Severity** (Purse/Chain Snatching, Trespassing, Falling):
+  - **Yellow LED** turns **ON / pulses** only for the alert duration, then turns OFF.
   - Green & Red LEDs are OFF.
-  - Buzzer is **SILENT**.
+  - Buzzer is **OFF**.
 
-- **HIGH / CRITICAL Severity** (Altercations, Snatching, Falling, Panic, Panic Button):
-  - **Red LED** rapid strobe (**0.08s - 0.15s**).
-  - **Buzzer** emits loud audio alarm chirps/sirens.
+- **HIGH Severity** (Physical Assault & Fighting, Eve-Teasing/Harassment, Panic Button):
+  - **Red LED** turns **ON / strobes** for the alert duration, then turns OFF.
+  - **Buzzer** sounds loud audio sirens.
   - Green & Yellow LEDs are OFF.
 
 ---
