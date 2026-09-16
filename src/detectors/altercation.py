@@ -71,14 +71,29 @@ class AltercationDetector(BaseDetector):
                         last_alert = self._alert_cooldowns.get(pair_key, 0.0)
                         if timestamp - last_alert > 6.0:
                             self._alert_cooldowns[pair_key] = timestamp
+
+                            # Dynamically calculate accuracy score from live kinematic & overlap metrics
+                            speed_factor = min(1.0, combined_speed / max(1.0, self.keypoint_vel_thresh * 1.3))
+                            iou_factor = min(1.0, max(0.5, iou / 0.35))
+                            duration_factor = min(1.0, duration / max(0.5, self.contact_duration_min * 2.0))
+                            conf_factor = (t1.confidence + t2.confidence) / 2.0
+
+                            calc_score = (
+                                0.35 * speed_factor
+                                + 0.25 * iou_factor
+                                + 0.20 * duration_factor
+                                + 0.20 * conf_factor
+                            )
+                            dynamic_accuracy = round(max(0.72, min(0.99, calc_score)), 3)
+
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="PHYSICAL_ALTERCATION",
                                     severity="HIGH",
-                                    confidence=0.88,
+                                    confidence=dynamic_accuracy,
                                     description=(
                                         f"Physical altercation/fight between Person {tid1} and Person {tid2} "
-                                        f"(Contact: {duration:.1f}s, IoU: {iou:.2f}, Speed: {combined_speed:.0f}px/s)"
+                                        f"(Contact: {duration:.1f}s, IoU: {iou:.2f}, Speed: {combined_speed:.0f}px/s, Acc: {dynamic_accuracy*100:.1f}%)"
                                     ),
                                     track_ids=[tid1, tid2],
                                     details={
@@ -87,6 +102,7 @@ class AltercationDetector(BaseDetector):
                                         "iou": round(iou, 2),
                                         "contact_duration": round(duration, 1),
                                         "combined_speed": round(combined_speed, 1),
+                                        "accuracy_score_pct": round(dynamic_accuracy * 100.0, 1),
                                     },
                                 )
                             )

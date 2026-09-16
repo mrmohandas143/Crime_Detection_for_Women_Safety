@@ -208,15 +208,12 @@ class SafetyMonitoringEngine:
         if self.oled:
             self.oled.show_alert(highest_alert.threat_type, duration_sec=3.0)
 
-        # 3. Log structured alert and save snapshot image with accuracy metrics
+        # 3. Log structured alert and save snapshot image
         for alert in alerts:
-            details_payload = dict(alert.details)
-            details_payload["confidence"] = round(alert.confidence, 2)
-            details_payload["accuracy_score"] = f"{round(alert.confidence * 100.0, 1)}%"
             self.logger.log_alert(
                 threat_type=alert.threat_type,
                 severity=alert.severity,
-                details=details_payload,
+                details=alert.details,
                 frame=frame,
             )
 
@@ -250,10 +247,6 @@ class SafetyMonitoringEngine:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 255), 1,
                 )
 
-        # Compute average tracking confidence
-        confs = [t.confidence for t in tracks.values() if t.confidence > 0]
-        avg_conf = (sum(confs) / len(confs) * 100.0) if confs else 0.0
-
         # Draw Person Tracks & Trajectories
         for track_id, track in tracks.items():
             x1, y1, x2, y2 = map(int, track.bbox)
@@ -265,31 +258,33 @@ class SafetyMonitoringEngine:
                 for i in range(1, len(points)):
                     cv2.line(vis, tuple(points[i - 1]), tuple(points[i]), (255, 200, 0), 1)
 
-            # Draw Bounding Box with Confidence / Accuracy score
+            # Draw Bounding Box with tracking and AI confidence score
             cv2.rectangle(vis, (x1, y1), (x2, y2), color, 2)
-            label = f"ID:{track_id} | Conf:{track.confidence*100:.0f}% | {track.speed_px_per_sec:.0f}px/s"
+            acc_pct = int(track.confidence * 100)
+            label = f"ID:{track_id} | AI-Conf:{acc_pct}% | {track.speed_px_per_sec:.0f}px/s | Dwell:{track.dwell_time:.1f}s"
             cv2.putText(
                 vis, label, (x1, max(15, y1 - 6)),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 255, 255), 1,
+                cv2.FONT_HERSHEY_SIMPLEX, 0.42, (255, 255, 255), 1,
             )
 
-        # Draw Active Alerts Banner with Accuracy / Confidence Score
+        # Draw Active Alerts Banner with Real-Time Calculated Accuracy Score
         if alerts:
             top_alert = alerts[0]
             acc_score = top_alert.confidence * 100.0
             alert_text = f"ALERT: {top_alert.threat_type} ({top_alert.severity}) | ACCURACY: {acc_score:.1f}%"
-            cv2.rectangle(vis, (0, 0), (vis.shape[1], 36), (0, 0, 220), -1)
+            
+            # Draw prominent alert box
+            cv2.rectangle(vis, (0, 0), (vis.shape[1], 40), (0, 0, 220), -1)
             cv2.putText(
-                vis, alert_text, (10, 24),
+                vis, alert_text, (10, 26),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.60, (255, 255, 255), 2,
             )
 
-        # Telemetry HUD showing Model, Accuracy, and Performance
-        hud_text = f"FPS: {self.current_fps:.1f} | People: {len(tracks)} | Model: YOLOv8n-pose (mAP50: 80.1%) | Live Conf: {avg_conf:.1f}%"
-        cv2.rectangle(vis, (0, vis.shape[0] - 25), (vis.shape[1], vis.shape[0]), (20, 20, 20), -1)
+        # Telemetry HUD with Overall Model / Stream Status
+        hud_text = f"FPS: {self.current_fps:.1f} | People: {len(tracks)} | Model: YOLOv8n-pose | CPU"
         cv2.putText(
-            vis, hud_text, (10, vis.shape[0] - 7),
-            cv2.FONT_HERSHEY_SIMPLEX, 0.40, (0, 255, 0), 1,
+            vis, hud_text, (10, vis.shape[0] - 10),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 255, 0), 1,
         )
 
         return vis

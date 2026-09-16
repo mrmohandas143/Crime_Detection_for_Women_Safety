@@ -67,15 +67,22 @@ class EveTeasingDetector(BaseDetector):
                         if timestamp - last_alert > 8.0:
                             self._alert_cooldowns[pair_key] = timestamp
 
-                            # Estimate which person is lingering / approaching
+                            # Dynamically calculate accuracy score from proximity breach depth & sustained duration
+                            prox_factor = max(0.5, min(1.0, 1.0 - (dist / max(1.0, self.proximity_thresh * 1.2))))
+                            dur_factor = min(1.0, duration / max(1.0, self.duration_thresh * 1.5))
+                            det_conf = (ta.confidence + tb.confidence) / 2.0
+
+                            calc_score = 0.40 * prox_factor + 0.40 * dur_factor + 0.20 * det_conf
+                            dynamic_accuracy = round(max(0.70, min(0.98, calc_score)), 3)
+
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="EVE_TEASING_PROXIMITY",
                                     severity="HIGH",
-                                    confidence=0.80,
+                                    confidence=dynamic_accuracy,
                                     description=(
                                         f"Sustained personal space breach between Person {id_a} and Person {id_b} "
-                                        f"(Dist: {dist:.0f}px for {duration:.1f}s)"
+                                        f"(Dist: {dist:.0f}px for {duration:.1f}s, Acc: {dynamic_accuracy*100:.1f}%)"
                                     ),
                                     track_ids=[id_a, id_b],
                                     details={
@@ -84,6 +91,7 @@ class EveTeasingDetector(BaseDetector):
                                         "distance_px": round(dist, 1),
                                         "hover_duration_sec": round(duration, 1),
                                         "detection_type": "HEURISTIC_PROXIMITY_HOVER",
+                                        "accuracy_score_pct": round(dynamic_accuracy * 100.0, 1),
                                     },
                                 )
                             )

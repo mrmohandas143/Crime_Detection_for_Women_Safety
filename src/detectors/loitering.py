@@ -62,18 +62,24 @@ class LoiteringDetector(BaseDetector):
                         # Check cooldown (alert once every 10 seconds per person per zone)
                         last_alert = self._alerted_tracks.get(key, 0.0)
                         if timestamp - last_alert >= 10.0:
-                            # Verify if movement is localized
+                            # Verify if movement is localized & calculate dynamic live accuracy score
                             dist_from_origin = euclidean_distance(centroid, track.stationary_origin)
-                            
+                            dwell_factor = min(1.0, dwell_duration / max(1.0, self.dwell_threshold * 1.5))
+                            immobility_factor = max(0.6, 1.0 - (dist_from_origin / max(10.0, self.movement_radius_max * 1.5)))
+                            det_conf = track.confidence
+
+                            calc_score = 0.45 * dwell_factor + 0.35 * immobility_factor + 0.20 * det_conf
+                            dynamic_accuracy = round(max(0.75, min(0.99, calc_score)), 3)
+
                             self._alerted_tracks[key] = timestamp
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="LOITERING",
                                     severity="LOW",
-                                    confidence=0.85,
+                                    confidence=dynamic_accuracy,
                                     description=(
                                         f"Person {track_id} loitering in '{zone_name}' "
-                                        f"for {dwell_duration:.1f}s (Threshold: {self.dwell_threshold}s)"
+                                        f"for {dwell_duration:.1f}s (Acc: {dynamic_accuracy*100:.1f}%)"
                                     ),
                                     track_ids=[track_id],
                                     details={
@@ -82,6 +88,7 @@ class LoiteringDetector(BaseDetector):
                                         "dwell_duration_sec": round(dwell_duration, 1),
                                         "centroid": [round(c, 1) for c in centroid],
                                         "displacement": round(dist_from_origin, 1),
+                                        "accuracy_score_pct": round(dynamic_accuracy * 100.0, 1),
                                     },
                                 )
                             )

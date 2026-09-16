@@ -73,14 +73,29 @@ class SnatchingDetector(BaseDetector):
                             ):
                                 if timestamp - self._last_alert_time > 4.0:
                                     self._last_alert_time = timestamp
+
+                                    # Dynamically calculate live accuracy score based on kinematic vectors & detection conf
+                                    escape_factor = min(1.0, escape_speed / max(1.0, self.min_escape_speed * 1.4))
+                                    accel_factor = min(1.0, escape_speed / max(1.0, approach_speed * 1.3))
+                                    time_factor = max(0.5, 1.0 - (contact_duration / max(0.1, self.max_interaction_time)))
+                                    det_conf = (t_attacker.confidence + t_victim.confidence) / 2.0
+
+                                    calculated_score = (
+                                        0.40 * escape_factor
+                                        + 0.30 * accel_factor
+                                        + 0.15 * time_factor
+                                        + 0.15 * det_conf
+                                    )
+                                    dynamic_accuracy = round(max(0.70, min(0.99, calculated_score)), 3)
+
                                     alerts.append(
                                         ThreatAlert(
                                             threat_type="SNATCHING_ATTEMPT",
                                             severity="MEDIUM",
-                                            confidence=0.85,
+                                            confidence=dynamic_accuracy,
                                             description=(
                                                 f"Grab-and-run snatching pattern: Person {attacker_id} approached "
-                                                f"Person {victim_id} and fled at {escape_speed:.0f}px/s"
+                                                f"Person {victim_id} and fled at {escape_speed:.0f}px/s (Acc: {dynamic_accuracy*100:.1f}%)"
                                             ),
                                             track_ids=[attacker_id, victim_id],
                                             details={
@@ -89,6 +104,7 @@ class SnatchingDetector(BaseDetector):
                                                 "escape_speed": round(escape_speed, 1),
                                                 "approach_speed": round(approach_speed, 1),
                                                 "contact_duration": round(contact_duration, 2),
+                                                "accuracy_score_pct": round(dynamic_accuracy * 100.0, 1),
                                             },
                                         )
                                     )

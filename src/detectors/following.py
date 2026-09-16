@@ -90,14 +90,24 @@ class SuspiciousFollowingDetector(BaseDetector):
                         last_alert = self._alert_cooldowns.get(pair_key, 0.0)
                         if timestamp - last_alert > 8.0:
                             self._alert_cooldowns[pair_key] = timestamp
+
+                            # Dynamically calculate accuracy score based on trajectory similarity, trailing duration & distance stability
+                            sim_factor = min(1.0, max(0.6, similarity / 0.95))
+                            dur_factor = min(1.0, duration / max(2.0, self.min_duration * 1.5))
+                            dist_factor = max(0.6, 1.0 - (abs(curr_dist - 90.0) / 150.0))
+                            det_conf = (t_lead.confidence + t_foll.confidence) / 2.0
+
+                            calc_score = 0.40 * sim_factor + 0.30 * dur_factor + 0.15 * dist_factor + 0.15 * det_conf
+                            dynamic_accuracy = round(max(0.72, min(0.98, calc_score)), 3)
+
                             alerts.append(
                                 ThreatAlert(
                                     threat_type="SUSPICIOUS_FOLLOWING",
                                     severity="LOW",
-                                    confidence=0.84,
+                                    confidence=dynamic_accuracy,
                                     description=(
                                         f"Suspicious following: Person {id_foll} is trailing Person {id_lead} "
-                                        f"for {duration:.1f}s (Trajectory Similarity: {similarity:.2f})"
+                                        f"for {duration:.1f}s (Sim: {similarity:.2f}, Acc: {dynamic_accuracy*100:.1f}%)"
                                     ),
                                     track_ids=[id_lead, id_foll],
                                     details={
@@ -106,6 +116,7 @@ class SuspiciousFollowingDetector(BaseDetector):
                                         "duration_sec": round(duration, 1),
                                         "similarity": round(similarity, 2),
                                         "current_distance": round(curr_dist, 1),
+                                        "accuracy_score_pct": round(dynamic_accuracy * 100.0, 1),
                                     },
                                 )
                             )

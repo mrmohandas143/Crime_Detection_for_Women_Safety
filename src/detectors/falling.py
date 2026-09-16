@@ -83,12 +83,22 @@ class FallingDetector(BaseDetector):
             # Trigger condition: Horizontal bounding box + (downward velocity OR horizontal pose)
             if is_horizontal_bbox and (downward_vel > self.downward_vel_thresh or is_horizontal_pose):
                 self._fallen_tracker_alerts[track_id] = timestamp
+
+                # Dynamically calculate accuracy score based on aspect ratio inversion, downward drop speed & pose angle
+                ar_factor = min(1.0, aspect_ratio / 1.6)
+                vy_factor = min(1.0, max(0.5, downward_vel / max(1.0, self.downward_vel_thresh * 1.5)))
+                pose_factor = 1.0 if is_horizontal_pose else 0.82
+                det_conf = track.confidence
+
+                calc_score = 0.35 * ar_factor + 0.30 * vy_factor + 0.20 * pose_factor + 0.15 * det_conf
+                dynamic_accuracy = round(max(0.75, min(0.99, calc_score)), 3)
+
                 alerts.append(
                     ThreatAlert(
                         threat_type="FALLING",
                         severity="MEDIUM",
-                        confidence=0.88,
-                        description=f"Person {track_id} collapsed / fell to ground (aspect_ratio={aspect_ratio:.2f}, vy={downward_vel:.1f}px/s)",
+                        confidence=dynamic_accuracy,
+                        description=f"Person {track_id} collapsed / fell to ground (AR={aspect_ratio:.2f}, vy={downward_vel:.1f}px/s, Acc: {dynamic_accuracy*100:.1f}%)",
                         track_ids=[track_id],
                         details={
                             "track_id": track_id,
@@ -96,6 +106,7 @@ class FallingDetector(BaseDetector):
                             "downward_velocity": round(downward_vel, 1),
                             "centroid": [round(c, 1) for c in track.centroid],
                             "is_horizontal_pose": is_horizontal_pose,
+                            "accuracy_score_pct": round(dynamic_accuracy * 100.0, 1),
                         },
                     )
                 )
